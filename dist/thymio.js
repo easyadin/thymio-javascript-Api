@@ -36855,11 +36855,7 @@ result.source=source;if(isError(result)){throw result;}return result;}/**
      *
      * _.toPath('a[0].b.c');
      * // => ['a', '0', 'b', 'c']
-     */function toPath(value){if(isArray(value)){
-       return arrayMap(value,toKey);
-      }
-      return isSymbol(value)?[value]:copyArray(stringToPath(toString(value)));
-    }/**
+     */function toPath(value){if(isArray(value)){return arrayMap(value,toKey);}return isSymbol(value)?[value]:copyArray(stringToPath(toString(value)));}/**
      * Generates a unique ID. If `prefix` is given, the ID is appended to it.
      *
      * @static
@@ -37180,224 +37176,6 @@ root._=_;}}).call(this);
 
 /***/ }),
 
-/***/ "./node_modules/process/browser.js":
-/*!*****************************************!*\
-  !*** ./node_modules/process/browser.js ***!
-  \*****************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-// shim for using process in browser
-var process = module.exports = {}; // cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-  throw new Error('setTimeout has not been defined');
-}
-
-function defaultClearTimeout() {
-  throw new Error('clearTimeout has not been defined');
-}
-
-(function () {
-  try {
-    if (typeof setTimeout === 'function') {
-      cachedSetTimeout = setTimeout;
-    } else {
-      cachedSetTimeout = defaultSetTimout;
-    }
-  } catch (e) {
-    cachedSetTimeout = defaultSetTimout;
-  }
-
-  try {
-    if (typeof clearTimeout === 'function') {
-      cachedClearTimeout = clearTimeout;
-    } else {
-      cachedClearTimeout = defaultClearTimeout;
-    }
-  } catch (e) {
-    cachedClearTimeout = defaultClearTimeout;
-  }
-})();
-
-function runTimeout(fun) {
-  if (cachedSetTimeout === setTimeout) {
-    //normal enviroments in sane situations
-    return setTimeout(fun, 0);
-  } // if setTimeout wasn't available but was latter defined
-
-
-  if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-    cachedSetTimeout = setTimeout;
-    return setTimeout(fun, 0);
-  }
-
-  try {
-    // when when somebody has screwed with setTimeout but no I.E. maddness
-    return cachedSetTimeout(fun, 0);
-  } catch (e) {
-    try {
-      // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-      return cachedSetTimeout.call(null, fun, 0);
-    } catch (e) {
-      // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-      return cachedSetTimeout.call(this, fun, 0);
-    }
-  }
-}
-
-function runClearTimeout(marker) {
-  if (cachedClearTimeout === clearTimeout) {
-    //normal enviroments in sane situations
-    return clearTimeout(marker);
-  } // if clearTimeout wasn't available but was latter defined
-
-
-  if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-    cachedClearTimeout = clearTimeout;
-    return clearTimeout(marker);
-  }
-
-  try {
-    // when when somebody has screwed with setTimeout but no I.E. maddness
-    return cachedClearTimeout(marker);
-  } catch (e) {
-    try {
-      // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-      return cachedClearTimeout.call(null, marker);
-    } catch (e) {
-      // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-      // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-      return cachedClearTimeout.call(this, marker);
-    }
-  }
-}
-
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-  if (!draining || !currentQueue) {
-    return;
-  }
-
-  draining = false;
-
-  if (currentQueue.length) {
-    queue = currentQueue.concat(queue);
-  } else {
-    queueIndex = -1;
-  }
-
-  if (queue.length) {
-    drainQueue();
-  }
-}
-
-function drainQueue() {
-  if (draining) {
-    return;
-  }
-
-  var timeout = runTimeout(cleanUpNextTick);
-  draining = true;
-  var len = queue.length;
-
-  while (len) {
-    currentQueue = queue;
-    queue = [];
-
-    while (++queueIndex < len) {
-      if (currentQueue) {
-        currentQueue[queueIndex].run();
-      }
-    }
-
-    queueIndex = -1;
-    len = queue.length;
-  }
-
-  currentQueue = null;
-  draining = false;
-  runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-  var args = new Array(arguments.length - 1);
-
-  if (arguments.length > 1) {
-    for (var i = 1; i < arguments.length; i++) {
-      args[i - 1] = arguments[i];
-    }
-  }
-
-  queue.push(new Item(fun, args));
-
-  if (queue.length === 1 && !draining) {
-    runTimeout(drainQueue);
-  }
-}; // v8 likes predictible objects
-
-
-function Item(fun, array) {
-  this.fun = fun;
-  this.array = array;
-}
-
-Item.prototype.run = function () {
-  this.fun.apply(null, this.array);
-};
-
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) {
-  return [];
-};
-
-process.binding = function (name) {
-  throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () {
-  return '/';
-};
-
-process.chdir = function (dir) {
-  throw new Error('process.chdir is not supported');
-};
-
-process.umask = function () {
-  return 0;
-};
-
-/***/ }),
-
 /***/ "./node_modules/webpack/buildin/amd-options.js":
 /*!****************************************!*\
   !*** (webpack)/buildin/amd-options.js ***!
@@ -37485,7 +37263,7 @@ module.exports = function (module) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* WEBPACK VAR INJECTION */(function(process) {/* harmony import */ var _mobsya_thymio_api__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @mobsya/thymio-api */ "./node_modules/@mobsya/thymio-api/dist/thymio.js");
+/* harmony import */ var _mobsya_thymio_api__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @mobsya/thymio-api */ "./node_modules/@mobsya/thymio-api/dist/thymio.js");
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
@@ -37500,27 +37278,15 @@ function sleep(ms) {
   return new Promise(function (resolve) {
     return setTimeout(resolve, ms);
   });
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Start monitotring for node event
+} // Start monitotring for node event
 // A node will have the state
 //      * connected    : Connected but vm description unavailable - little can be done in this state
 //      * available    : The node is available, we can start communicating with it
 //      * ready        : We have an excusive lock on the node and can start sending code to it.
 //      * busy         : The node is locked by someone else.
 //      * disconnected : The node is gone
+//TODO add button to trigger onNodeChanged to connect robots
+//also display nodes in html
 
 
 client.onNodesChanged =
@@ -37528,482 +37294,157 @@ client.onNodesChanged =
 function () {
   var _ref = _asyncToGenerator(
   /*#__PURE__*/
-  regeneratorRuntime.mark(function _callee2(nodes) {
-    var _iteratorNormalCompletion, _didIteratorError, _iteratorError, _loop, _iterator, _step, _ret;
+  regeneratorRuntime.mark(function _callee(nodes) {
+    var _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, node;
 
-    return regeneratorRuntime.wrap(function _callee2$(_context3) {
+    return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
-        switch (_context3.prev = _context3.next) {
+        switch (_context.prev = _context.next) {
           case 0:
-            _context3.prev = 0;
+            _context.prev = 0;
             //Iterate over the nodes
             _iteratorNormalCompletion = true;
             _didIteratorError = false;
             _iteratorError = undefined;
-            _context3.prev = 4;
-            _loop =
-            /*#__PURE__*/
-            regeneratorRuntime.mark(function _loop() {
-              var node;
-              return regeneratorRuntime.wrap(function _loop$(_context2) {
-                while (1) {
-                  switch (_context2.prev = _context2.next) {
-                    case 0:
-                      node = _step.value;
-                      console.log("".concat(node.id, " : ").concat(node.statusAsString)); // Select the first non busy node
-
-                      if (!((!selectedNode || selectedNode.status != _mobsya_thymio_api__WEBPACK_IMPORTED_MODULE_0__["NodeStatus"].ready) && node.status == _mobsya_thymio_api__WEBPACK_IMPORTED_MODULE_0__["NodeStatus"].available)) {
-                        _context2.next = 14;
-                        break;
-                      }
-
-                      _context2.prev = 3;
-                      console.log("Locking ".concat(node.id)); // Lock (take ownership) of the node. We cannot mutate a node (send code to it), until we have a lock on it
-                      // Once locked, a node will appear busy / unavailable to other clients until we close the connection or call `unlock` explicitely
-                      // We can lock as many nodes as we want
-
-                      _context2.next = 7;
-                      return node.lock();
-
-                    case 7:
-                      selectedNode = node;
-                      console.log("Node locked");
-                      _context2.next = 14;
-                      break;
-
-                    case 11:
-                      _context2.prev = 11;
-                      _context2.t0 = _context2["catch"](3);
-                      console.log("Unable To Log ".concat(node.id, " (").concat(node.name, ")"));
-
-                    case 14:
-                      if (selectedNode) {
-                        _context2.next = 16;
-                        break;
-                      }
-
-                      return _context2.abrupt("return", "continue");
-
-                    case 16:
-                      _context2.prev = 16;
-                      //This is requiered in order to receive the variables and node of a group
-                      node.watchSharedVariablesAndEvents(true); //Monitor the shared variables - note that because this callback is set on a group
-                      //It does not track group changes
-
-                      node.group.onVariablesChanged = function (vars) {
-                        console.log("shared variables : ", vars);
-                      }; //Monitor the event descriptions - note that because this callback is set on a group, it does not track group changes
-
-
-                      node.group.onEventsDescriptionsChanged = function (events) {
-                        console.log("descriptions", events);
-                      }; //Monitor variable changes
-
-
-                      node.onVariablesChanged = function (vars) {
-                          var pgd = document.getElementById("pgd");
-                          var pgr = document.getElementById("pgr");
-                          var i = document.getElementById("i");
-
-                          pgd.value = vars.get('prox.ground.delta');
-                          pgr.value = vars.get('prox.ground.reflected');
-                        //  i.value = vars.get('i').toString();
-
-
-                        //  console.log(vars);
-
-
-                      }; //Monitor events
-
-                      
-                      node.onEvents =
-                      /*#__PURE__*/
-                      function () {
-                        var _ref2 = _asyncToGenerator(
-                        /*#__PURE__*/
-                        regeneratorRuntime.mark(function _callee(events) {
-                          var pong;
-                          return regeneratorRuntime.wrap(function _callee$(_context) {
-                            while (1) {
-                              switch (_context.prev = _context.next) {
-                                case 0:
-                                  console.log("events", events);
-                                  pong = events.pong;
-
-                                  if (!pong) {
-                                    _context.next = 7;
-                                    break;
-                                  }
-
-                                  _context.next = 5;
-                                  return sleep(1000);
-
-                                case 5:
-                                  _context.next = 7;
-                                  return node.emitEvents({
-                                    "ping": null
-                                  });
-
-                                  
-                                case 7:
-                                case "end":
-                                  return _context.stop();
-                              }
-                            }
-                          }, _callee);
-                        }));
-
-                        return function (_x2) {
-                          return _ref2.apply(this, arguments);
-                        };
-                      }();
-
-                      _context2.next = 24;
-                      return node.group.setEventsDescriptions([{
-                        name: "ping",
-                        fixed_size: 0
-                      }, {
-                        name: "pong",
-                        fixed_size: 1
-                      },
-                  {
-                        
-                      name: "pang",
-                      fixed_size: 2
-                  }
-                    ]);
-
-                    case 24:
-                      _context2.next = 26;
-
-
-                     //aim here is to read from file
-                     document.getElementById('aeslContent');
-                      document.getElementById('upload').addEventListener('change',readFileAsString);
-                      function readFileAsString(){
-                        var files = this.files;
-                        if(files.length === 0){
-                          console.log('no file is selected');
-                          return;
-                        }
-                        var reader = new FileReader();
-                        reader.onload = function(event){
-                            console.log('File content:', event.target.result);
-                            aeslContent.innerText = event.target.result;
-                        };
-                        reader.readAsText(files[0]);
-                      }
-                          // at the moment importing files does not work/....fix that soon
-
-                      return node.sendAsebaProgram(
-
-                        `
-                        #Collision Avoidance
-                        #Robot is intended to avoid obstacles and give feedback obstacle in range of sensor readings
-                        
-                        var staticSensorThreshold = 3200
-                        
-                        var sensorFrontMax = 0 
-                        var sensorBackMax = 0
-                        
-                        var reverseProtocal = 0
-                        
-                        var detectDeadEnd = 0
-                        
-                        var kickStart = 0
-                        
-                        var reverseFromLeft = 0
-                        var reverseFromRight = 0
-                        
-                        var initiateReverse = 0
-                        var countLeftSteps = 0
-                        var countRightSteps = 0
-                        var countFrontSteps = 0
-                        var sensorSumFront = 0
-                        var sensorSumBack = 0 
-                        
-                        var shouldMove = 1 # holds the value moving 1 and not moving 0
-                        var i =0 #variable set default to 1
-                        var sensorFrontArray[5] #array to hold sensor array at the front
-                        var sensorBackArray[2] # array to hold sensor array at the back
-                        var overrideRemote = 0
-                        var direction = 0 # 0: hasn-t just turned; 1: just turned left; 2: just turned right; 3: just moved back
-                        #initial movement disabled
-                        motor.left.target = 0
-                        motor.right.target = 0
-                        
-                        #timer default set to 0 
-                        timer.period[0]= 200
-                        timer.period[1]= 0
-                        
-                        #set led default to off
-                        call leds.bottom.right(0,0,0)
-                        call leds.bottom.left(0,0,0)
-                        call leds.top(32,32,0)
-                        
-                        #------------------------------------------------------Remote Control Signal to Robot------------------------------------------------------
-                        #here we init robot movement forwared with remote control
-                        onevent rc5
-                        if (rc5.command == 53) then
-                        shouldMove = 1
-                        call leds.top(31,31,12) #change color code to specified	
-                        
-                        #halt robot movement on remote signal 13 or 87
-                        elseif (rc5.command == 87) then
-                        call leds.top(31,0,0) # change color to red on remote signal 13
-                        shouldMove = 0 #set moving to false
-                        motor.left.target = 0
-                        motor.right.target = 0
-                        end
-                        
-                        #-----------------------------------------------------------------------------Collision Avoidance---------------------------------------------------------	
-                        #obstacle avoidance
-                        onevent prox	
-                        # front sensor array
-                        sensorFrontArray[0] = prox.horizontal[0]
-                        sensorFrontArray[1] = prox.horizontal[1]
-                        sensorFrontArray[2] = prox.horizontal[2]
-                        sensorFrontArray[3] = prox.horizontal[3]
-                        sensorFrontArray[4] = prox.horizontal[4]
-                        # back sensor array
-                        sensorBackArray[0] = prox.horizontal[5]
-                        sensorBackArray[1] = prox.horizontal[6]
-                        #max of front sensor array
-                        sensorFrontMax = 0
-                        #max of back sensor array
-                        sensorBackMax = 0
-                        #sum of front sensor array
-                        sensorSumFront = 0
-                        #sum of back sensor array
-                        sensorSumBack = 0
-                        #----------------------------------------------Loop to track sensor readings ----------------------------------	
-                        # loop to find max front sensors
-                        for i in 0:4 do
-                        if (sensorFrontArray[i] > sensorFrontMax) then
-                        sensorFrontMax = sensorFrontArray[i]
-                        end
-                        end
-                        
-                        # loop to find max back sensors
-                        for i in 0:1 do
-                        if (sensorBackArray[i] > sensorBackMax) then
-                        sensorBackMax = sensorBackArray[i]
-                        end
-                        end
-                        
-                        # sum of front sensors
-                        for i in 0:4 do
-                        sensorSumFront = sensorSumFront+ sensorFrontArray[i]
-                        end
-                        
-                        # sum of back sensors
-                        for i in 0:1 do
-                        sensorSumBack = sensorSumBack+ sensorBackArray[i]
-                        end
-                        #------------------------------------------Loop declararations Ends here--------------------------------------------	
-                        
-                        if (shouldMove == 1) then
-                        call leds.top(0,31,0)
-                        if (sensorFrontMax < 900) then # only moves forward when no sensor readings higher than 0
-                        call leds.top(0,31,0)
-                        motor.left.target = 2000
-                        motor.right.target = 2000
-                        reverseFromRight = 0
-                        reverseFromLeft = 0
-                        elseif (prox.horizontal[1] > 900 or prox.horizontal[0] > 900) then
-                        #turn left
-                        call leds.top(31,0,0)
-                        motor.left.target = 100
-                        motor.right.target = -200
-                        reverseFromLeft = 1
-                        countLeftSteps++
-                        
-                        elseif (prox.horizontal[3] > 900 or prox.horizontal[4]>900) then
-                        #turn right
-                        call leds.top(31,0,0)
-                        motor.right.target = 100
-                        motor.left.target = -200
-                        #reverseFromRight = 1
-                        countRightSteps++	
-                        
-                        #middle sensor at 2
-                        elseif (sensorFrontMax == prox.horizontal[2]) then
-                        #turn right
-                        call leds.top(31,31,0)
-                        motor.right.target = -500
-                        motor.left.target =	-500
-                        #countFrontSteps++
-                        #motor.left.target = 0
-                        #motor.left.target = -50
-                        #robot stuck in front?
-                        elseif (prox.horizontal[2] == sensorFrontMax and prox.horizontal[2] == sensorSumFront) then
-                        countFrontSteps++
-                        
-                        #check rear sensor
-                        elseif (sensorSumBack > 7000) then
-                        motor.right.target = 500
-                        motor.left.target =	500	
-                        end	
-                        
-                        #deadEnd?
-                        if (sensorSumFront > 6000 and sensorSumFront < 20000 ) then
-                        detectDeadEnd++
-                        end
-                        
-                        if (detectDeadEnd >1 and sensorSumBack <1000) then
-                        call leds.top(0,0,32)
-                        motor.right.target = -900
-                        motor.left.target =	0
-                        detectDeadEnd = 0
-                        end
-                        
-                        if (countRightSteps > 2) then
-                        motor.right.target = 500
-                        motor.left.target = 500
-                        countRightSteps = 0
-                        
-                        elseif (countLeftSteps > 2) then
-                        motor.right.target = 500
-                        motor.left.target = 500
-                        countLeftSteps = 0
-                        
-                        elseif (countFrontSteps > 1) then
-                        motor.right.target = -200
-                        motor.left.target = -200
-                        countFrontSteps = 0
-                        
-                        end
-                        
-                        
-                        if (sensorFrontMax > 3000) then
-                        initiateReverse++
-                        end
-                        
-                        if(initiateReverse >2) then
-                        call leds.top(0,0,32)
-                        motor.right.target = -900
-                        motor.left.target = -900
-                        initiateReverse=0
-                        reverseProtocal++
-                        end
-                        
-                        if (reverseProtocal > 8) then
-                        motor.right.target = 1000
-                        motor.left.target = 1000
-                        reverseProtocal=0
-                        end
-                        
-                        end
-                        `
-                      );
-
-                    case 26:
-                      _context2.next = 28;
-                      return node.runProgram();
-
-                    case 28:
-                      _context2.next = 30;
-                      return node.emitEvents("ping");
-
-                    case 30:
-                      _context2.next = 36;
-                      break;
-
-                    case 32:
-                      _context2.prev = 32;
-                      _context2.t1 = _context2["catch"](16);
-                      console.log(_context2.t1);
-                      process.exit();
-
-                    case 36:
-                    case "end":
-                      return _context2.stop();
-                  }
-                }
-              }, _loop, null, [[3, 11], [16, 32]]);
-            });
+            _context.prev = 4;
             _iterator = nodes[Symbol.iterator]();
 
-          case 7:
+          case 6:
             if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-              _context3.next = 15;
+              _context.next = 40;
               break;
             }
 
-            return _context3.delegateYield(_loop(), "t0", 9);
+            node = _step.value;
+            console.log("".concat(node.id, " : ").concat(node.statusAsString)); // Select the first non busy node 
 
-          case 9:
-            _ret = _context3.t0;
-
-            if (!(_ret === "continue")) {
-              _context3.next = 12;
+            if (!((!selectedNode || selectedNode.status != _mobsya_thymio_api__WEBPACK_IMPORTED_MODULE_0__["NodeStatus"].ready) && node.status == _mobsya_thymio_api__WEBPACK_IMPORTED_MODULE_0__["NodeStatus"].available)) {
+              _context.next = 21;
               break;
             }
 
-            return _context3.abrupt("continue", 12);
+            _context.prev = 10;
+            console.log("Locking ".concat(node.id)); // Lock (take ownership) of the node. We cannot mutate a node (send code to it), until we have a lock on it
+            // Once locked, a node will appear busy / unavailable to other clients until we close the connection or call `unlock` explicitely
+            // We can lock as many nodes as we want
 
-          case 12:
-            _iteratorNormalCompletion = true;
-            _context3.next = 7;
+            _context.next = 14;
+            return node.lock();
+
+          case 14:
+            selectedNode = node;
+            console.log("Node locked");
+            _context.next = 21;
             break;
 
-          case 15:
-            _context3.next = 21;
-            break;
-
-          case 17:
-            _context3.prev = 17;
-            _context3.t1 = _context3["catch"](4);
-            _didIteratorError = true;
-            _iteratorError = _context3.t1;
+          case 18:
+            _context.prev = 18;
+            _context.t0 = _context["catch"](10);
+            console.log("Unable To Log ".concat(node.id, " (").concat(node.name, ")"));
 
           case 21:
-            _context3.prev = 21;
-            _context3.prev = 22;
+            if (selectedNode) {
+              _context.next = 23;
+              break;
+            }
+
+            return _context.abrupt("continue", 37);
+
+          case 23:
+            _context.prev = 23;
+            //This is requiered in order to receive the variables and node of a group
+            node.watchSharedVariablesAndEvents(true); //Monitor the shared variables - note that because this callback is set on a group
+            //It does not track group changes
+
+            node.group.onVariablesChanged = function (vars) {
+              console.log("shared variables : ", vars);
+            }; //Monitor the event descriptions - note that because this callback is set on a group, it does not track group changes
+
+
+            node.group.onEventsDescriptionsChanged = function (events) {
+              console.log("descriptions", events);
+            }; //Monitor variable changes
+
+
+            node.onVariablesChanged = function (vars) {// console.log(vars)
+            };
+
+            _context.next = 30;
+            return node.sendAsebaProgram("\n           \n            \n           \n            \n                call leds.top(0,0,30)\n           \n            \n                call leds.top(32,0,0)\n            \n            \n           \n            \n            ");
+
+          case 30:
+            _context.next = 32;
+            return node.runProgram();
+
+          case 32:
+            _context.next = 37;
+            break;
+
+          case 34:
+            _context.prev = 34;
+            _context.t1 = _context["catch"](23);
+            console.log(_context.t1); //  process.exit()
+
+          case 37:
+            _iteratorNormalCompletion = true;
+            _context.next = 6;
+            break;
+
+          case 40:
+            _context.next = 46;
+            break;
+
+          case 42:
+            _context.prev = 42;
+            _context.t2 = _context["catch"](4);
+            _didIteratorError = true;
+            _iteratorError = _context.t2;
+
+          case 46:
+            _context.prev = 46;
+            _context.prev = 47;
 
             if (!_iteratorNormalCompletion && _iterator.return != null) {
               _iterator.return();
             }
 
-          case 24:
-            _context3.prev = 24;
+          case 49:
+            _context.prev = 49;
 
             if (!_didIteratorError) {
-              _context3.next = 27;
+              _context.next = 52;
               break;
             }
 
             throw _iteratorError;
 
-          case 27:
-            return _context3.finish(24);
+          case 52:
+            return _context.finish(49);
 
-          case 28:
-            return _context3.finish(21);
+          case 53:
+            return _context.finish(46);
 
-          case 29:
-            _context3.next = 35;
+          case 54:
+            _context.next = 59;
             break;
 
-          case 31:
-            _context3.prev = 31;
-            _context3.t2 = _context3["catch"](0);
-            console.log(_context3.t2);
-            process.exit();
+          case 56:
+            _context.prev = 56;
+            _context.t3 = _context["catch"](0);
+            console.log(_context.t3); // process.exit()
 
-          case 35:
+          case 59:
           case "end":
-            return _context3.stop();
+            return _context.stop();
         }
       }
-    }, _callee2, null, [[0, 31], [4, 17, 21, 29], [22,, 24, 28]]);
+    }, _callee, null, [[0, 56], [4, 42, 46, 54], [10, 18], [23, 34], [47,, 49, 53]]);
   }));
 
   return function (_x) {
     return _ref.apply(this, arguments);
   };
 }();
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../node_modules/process/browser.js */ "./node_modules/process/browser.js")))
 
 /***/ }),
 

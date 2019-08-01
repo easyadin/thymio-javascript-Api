@@ -1,0 +1,63 @@
+body {
+    display:flex;
+   
+}
+/** Front sensor **/
+.grid-container{
+    display: grid;
+    align-items: center;
+    grid-gap: 10px;
+    width: 100%;
+   
+
+}
+
+.grid-item{
+    grid-row: 1;
+    border: 1px solid rgba(0, 0, 0, 0.8);
+    font-size: 15px;
+    text-align: center;
+    padding: 20px;
+    border-color:transparent;
+    background-color: rgba(103, 103, 121, 0.199);
+}
+
+.prox_0 {
+    transform: rotate(-20deg);
+}
+
+.prox_1, .prox_2 ,.prox_3 {
+    margin-bottom: 30px;
+}
+
+.prox_4 {
+    transform: rotate(20deg);
+}
+
+.grid-itemTopLed{
+    grid-row: 1;
+    border: 1px solid rgba(0, 0, 0, 0.8);
+    font-size: 15px;
+    text-align: center;
+    padding: 20px;
+    border-color:transparent;
+}
+.top-led{
+    margin-top: 50px;
+    margin-left: 140px;
+    border-radius: 100%;
+    border-color: white;
+    height: 200px;
+    width:200px;
+    background-color: rgba(103, 103, 121, 0.199); 
+}
+
+/** Back sensor **/
+
+
+.back-sensor {
+    margin-top: 50px;
+    align-content: center;
+    align-items: center
+}
+

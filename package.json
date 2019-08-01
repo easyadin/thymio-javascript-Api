@@ -5,6 +5,7 @@
   "main": "webpack.config.js",
   "dependencies": {
     "@babel/polyfill": "^7.4.4",
+    "rangeslider.js": "^2.3.2",
     "webpack": "^4.33.0"
   },
   "devDependencies": {
