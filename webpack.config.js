@@ -1,6 +1,7 @@
 const path = require('path');
 const webpack = require('webpack');
 var babelenv = require('@babel/preset-env');
+const HtmlWebPackPlugin = require("html-webpack-plugin");
 
 const browserConfig = {
     entry : [
@@ -79,3 +80,25 @@ const nodeConfig = {
 };
 
 module.exports = [ browserConfig , nodeConfig];
+
+module.exports = {
+    module:{
+        rules: [
+            {
+                test:/\.html$/,
+                use:[
+                    {
+                        loader:"html-loader",
+                        options:{minimize:true}
+                    }
+                ]
+            }
+        ]
+    },
+    plugins:[
+        new HtmlWebPackPlugin({
+            template:"./src/index.html",
+            filename:"./index.html"
+        }),
+    ]
+}
